@@ -284,11 +284,11 @@ Review Backbone's [catalog of built-in events](http://backbonejs.org/#Events-cat
 
 ## Using Views
 
-Views create linkage between models and display elements. Generally speaking, Models and Collections can both be considered as *data sources*. When building an application front-end, views should generally map (at least) one-to-one to each data source represented – meaning  that one view controller is created for each collection and each model represented within the display.
+Views create linkage between data sources (Models and Collections) and display elements. As a general rule, Views should map one-to-one with each data source present – meaning  that one view controller is created for each collection and each model represented within the display.
 
 ### Creating a view's container element
 
-All Backbone Views are attached to a *container element*, or a main HTML document element into which all nested display and behavior is allocated. A common approach while getting started with Backbone is to bind your major views onto pre-defined elements within your HTML Document Object Model (hereforth referred to as the "DOM"). For example:
+All Backbone Views are attached to a *container element*, or a main HTML document element into which all nested display and behavior is allocated. A common approach while getting started is to bind your major views onto pre-defined elements within your HTML Document Object Model (hereforth referred to as the "DOM").
 
 	<ul id="muppets-list"></ul>
 	
@@ -309,13 +309,15 @@ Another common workflow is to let Backbone create a new view container element f
 	
 We frequently use these two creational view patterns together: a DOM element reference for a list container, and dynamically created elements for list items.
 
-Once an element has been attached to a View, a jQuery reference to the element will be stored as the view's `view.$el` property. We'll commonly use the `view.$el` reference to work with the view's managed element using the jQuery API. Also, Backbone views provide a convenient `view.$` method that we may use to query for elements within the managed view. Calling `view.$('.selector')` is equivelant to calling `view.$el.find('.selector');`. While this is a fairly minor workflow benefit, it encourages much more performant DOM access by localizing queries to within a view's element scope.
+Once an element has been attached to a View, a jQuery reference to the element will be stored as the view's `view.$el` property. We'll commonly use the `view.$el` reference to work with the view's managed element using the jQuery API.
+
+Also, Backbone views provide a convenient `view.$` method that we may use to query for elements within the managed view. Calling `view.$('…')` is equivelant to calling `view.$el.find('…')`. While this is a fairly minor workflow benefit, it encourages much more performant DOM access by localizing queries to within a view's element scope.
 
 ### Attaching a view's data source
 
-Once a view class has established how it attaches to a DOM element, we next need to construct instances of that view (remember that extending Backbone components returns constructor functions) and provide them with data sources. When constructing a view instance, we may provide it a `model` or `collection` reference that will be added to the view instance, like so…
+Once a view class has defined its relationship with the DOM, we then construct instances of the view, and provide each instance with a data source. When constructing a view instance, we may provide it with a `model` or `collection` reference.
 
-Attaching a Model (see last two lines):
+Attaching a Model to a View (see final two lines):
 
 	var KermitModel = Backbone.Model.extend({
 		url: '/muppets/1'
@@ -331,11 +333,11 @@ Attaching a Model (see last two lines):
 		}
 	});
 	
-	// Create instances:
+	// Create Model and View instances:
 	var kermitModel = new KermitModel();
 	var kermitView = new MuppetsListItemView({model: kermitModel});
 
-Attaching a Collection (see last two lines):
+Attaching a Collection to a View (see final two lines):
 
 	var MuppetsModel = Backbone.Model.extend({ . . . });
 	
@@ -352,38 +354,65 @@ Attaching a Collection (see last two lines):
 		}
 	});
 	
-	// Create instances:
+	// Create Collection and View instances:
 	var muppetsList = new MuppetsCollection();
 	var muppetsView = new MuppetsListView({collection: muppetsList});
 
-In these two examples, note that the view has been provided with a `model` or `collection` reference that it now has direct access to. It will be the view's job to render this data source into the display, and pass user input from the display back into its bound data source.
+In the above examples, a data source is provideded to each view as a *constructor option*. The provided data source is attached directly to its view instance, allowing the view to reference that source as `this.model` or `this.collection`. It will be the view's job to render this data source into its DOM element, and pass user input data from the DOM back into this data source.
 
-### Binding input events
+Also notice the `initialize` methods in the above examples. An `initialize` method is called on each new Backbone component at the time it's created, giving you an opportunity to configure the new object. All Backbone components provide `initialize` methods.
 
-Views provide a convenient and efficient way of delegating user interface events into the view controller. Backbone offers a declarative events interface of setting up user interface bindings.
+### Rendering a View
 
+Among the primary responsibility of a view is to render data from its data source into its bound DOM element. Now, Backbone is notoriously unopinionated about this task (for better or worse), and provides no fixture for translating a data source into display-ready HTML. That's for us to define.
+
+However, Backbone does dictate a general workflow for *where* and *when* rendering occurs:
+
+1. A views defines a `render` method. This method generates HTML from its data source, and installs that markup into the view's container element.
+2. A view binds event listeners to its model. Any changes to the model should trigger the view to re-render.
+
+A simple implementation:
+
+	<div id="#kermit-view"></div>
+	
+	<script>
 	var KermitModel = Backbone.Model.extend({
 		url: '/muppets/1',
-		defaults: { . . . }
+		defaults: {
+			name: '',
+			occupation: ''
+		}
 	});
 	
 	ver KermitView = Backbone.View.extend({
 		el: '#kermit-view',
 		
-		events: {
-			'click .update': 'onUpdate'
+		initialize: function() {
+			this.listenTo(this.model, 'sync change', this.render);
+			this.model.fetch();
+			this.render();
 		},
 		
-		onUpdate: function(evt) {
-		
+		render: function() {
+			var html = '<b>Name:</b> ' + this.model.get('name');
+			html += ', occupation: ' + this.model.get('occupation');
+			this.$el.html(html);
+			return this;
 		}
-	});
+	});	
 	
 	var kermit = new KermitModel();
 	var kermitView = new KermitView({model: kermit});
+	</script>
 
+In the above example, a simple render cycle is formed:
 
-### Creating templates
+1. The view's `render` method translates its bound model into display-ready HTML. The rendered HTML is inserted into the view's container element. A `render` method normally returns a reference to the view for method-chaining purposes.
+2. The view's `initialize` method binds event listeners to the model for `sync` and `change` events. Either of these model events will trigger the view to re-render. The view then fetches (loads) its model, and renders its initial appearance.
+
+The core focus of this workflow is *event-driven behavior*. View rendering should NOT be a direct result of user interactions or application behaviors. Manually calling `render` is prone to errors and inconsistancies. Instead, rendering should be a simple union of data and display: when the data changes, the display updates.
+
+### Rendering with templates
 
 The most efficient way to render model data into the DOM is by creating a template that parses data attributes into a string of HTML markup.
 
@@ -416,6 +445,32 @@ The Underscore template method parses our raw text into a reusable *template fun
 	
 Be mindful that the most expensive operation involved with template rendering is parsing that initial template function. Therefor, it's best to retain a parsed template function for future use rather than reparse the template function every time you need to render a view.
 
+### Binding DOM events
+
+Next, a view must capture user input events – whether those are button clicks, typing into an input field, or changing a select menu.
+
+Views provide a convenient and efficient way of delegating user interface events into the view controller. Backbone offers a declarative events interface of setting up user interface bindings.
+
+	var KermitModel = Backbone.Model.extend({
+		url: '/muppets/1',
+		defaults: { . . . }
+	});
+	
+	ver KermitView = Backbone.View.extend({
+		el: '#kermit-view',
+		
+		events: {
+			'click .update': 'onUpdate'
+		},
+		
+		onUpdate: function(evt) {
+		
+		}
+	});
+	
+	var kermit = new KermitModel();
+	var kermitView = new KermitView({model: kermit});
+	
 ### Rendering an application view
 
 Now its time to make our application render out a list of muppets. Here we go:
