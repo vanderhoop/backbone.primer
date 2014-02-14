@@ -288,7 +288,7 @@ Views create linkage between data sources (Models and Collections) and display e
 
 ### Creating a view's container element
 
-All Backbone Views are attached to a *container element*, or a main HTML document element into which all nested display and behavior is allocated. A common approach while getting started is to bind your major views onto pre-defined elements within your HTML Document Object Model (hereforth referred to as the "DOM"). For example:
+All Backbone views are attached to a *container element*, or an HTML document element into which all nested display and behavior is allocated. A common approach is to bind major views onto predefined elements within the HTML Document Object Model (hereforth referred to as the "DOM"). For example:
 
 	<ul id="muppets-list"></ul>
 	
@@ -298,16 +298,16 @@ All Backbone Views are attached to a *container element*, or a main HTML documen
 	});
 	</script>
 
-In the above example, we define a new Backbone View class, and reference `"#muppets-list"` as its target `el`, or *element*. This element reference is a selector string that gets resolved into a DOM element reference.
+In the above example, a Backbone view class is configured to reference `"#muppets-list"` as its target `el`, or *element*. This element reference is a *selector string* that gets resolved into a DOM element reference.
 
-Another common workflow is to have Backbone create a new view container element for us. To do this, we simply provide a `tagName` and an optional `className` for the container element to create. This approach is commonly used when generating list items for a collection:
+Another common workflow is to have Backbone views create their own container elements. To do this, simply provide a `tagName` and an optional `className` for the created element:
 
 	var MuppetsListItemView = Backbone.View.extend({
 		tagName: 'li',
 		className: 'muppet'
 	});
 	
-Note that these two view element patterns (selected/created) are commonly used together, especially when rendering lists.
+These two container element patterns (*selecting* and *creating*) are commonly used together. For example, a collection may attach itself to a selected DOM element, and then create elements for each item in the collection.
 
 Once a view class is defined, we'll next need to instance it:
 
@@ -315,17 +315,20 @@ Once a view class is defined, we'll next need to instance it:
 		el: '#muppets-list'
 	});
 	
+	// Create a new view instance:
 	var muppetsList = new MuppetsListView();
 	
+	// Append content into the view's container element:
 	muppetsList.$el.append('<li>Hello World</li>');
 	
-When a view is instanced, Backbone will configure an `$el` property for us – this is a jQuery object wrapping the view's attached container element. This reference provides a convenient way to work with the container element using the jQuery API.
+When a view is instanced, Backbone will configure an `$el` property for us––this is a jQuery object wrapping the view's attached container element. This reference provides a convenient way to work with the container element using the jQuery API.
 
-Backbone also encourages efficient DOM practices using jQuery. Rather than performing large and expensive operations across the entire HTML document, Backbone Views provide a `$` method used for performing jQuery operations locally within the view's container element. For example:
+Backbone also encourages efficient DOM practices using jQuery. Rather than performing large and expensive operations across the entire HTML document, Backbone views provide a `$` method that performs jQuery operations locally within the view's container element:
+	
+	// Find all "li" tags locally within the view's container:
+	muppetsList.$('li');
 
-	muppetsList.$('li'); // << Finds all "li" tags within the view's container.
-
-Under the hood, using `view.$('…')` is synonymous to calling `view.$el.find('…')`. These localized queries greatly cut down the overhead of superflous DOM operations.
+Under the hood, using `view.$('…')` is synonymous with calling `view.$el.find('…')`. These localized queries greatly cut down on superflous DOM operations.
 
 ### Attaching a view's data source
 
