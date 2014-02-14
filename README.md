@@ -288,7 +288,7 @@ Views create linkage between data sources (Models and Collections) and display e
 
 ### Creating a view's container element
 
-All Backbone Views are attached to a *container element*, or a main HTML document element into which all nested display and behavior is allocated. A common approach while getting started is to bind your major views onto pre-defined elements within your HTML Document Object Model (hereforth referred to as the "DOM").
+All Backbone Views are attached to a *container element*, or a main HTML document element into which all nested display and behavior is allocated. A common approach while getting started is to bind your major views onto pre-defined elements within your HTML Document Object Model (hereforth referred to as the "DOM"). For example:
 
 	<ul id="muppets-list"></ul>
 	
@@ -298,20 +298,34 @@ All Backbone Views are attached to a *container element*, or a main HTML documen
 	});
 	</script>
 
-In the above example, we define a new Backbone view class, and reference `"#muppets-list"` as its target element. This element reference is a *selector string* that Backbone has jQuery resolve into a DOM element reference.
+In the above example, we define a new Backbone View class, and reference `"#muppets-list"` as its target `el`, or *element*. This element reference is a selector string that gets resolved into a DOM element reference.
 
-Another common workflow is to let Backbone create a new view container element for us. To do this, we simply provide some information about the container element, and let Backbone create the element for us. This approach is commonly applied when rendering list items for a collection of models:
+Another common workflow is to have Backbone create a new view container element for us. To do this, we simply provide a `tagName` and an optional `className` for the container element to create. This approach is commonly used when generating list items for a collection:
 
 	var MuppetsListItemView = Backbone.View.extend({
 		tagName: 'li',
 		className: 'muppet'
 	});
 	
-We frequently use these two creational view patterns together: a DOM element reference for a list container, and dynamically created elements for list items.
+Note that these two view element patterns (selected/created) are commonly used together, especially when rendering lists.
 
-Once an element has been attached to a View, a jQuery reference to the element will be stored as the view's `view.$el` property. We'll commonly use the `view.$el` reference to work with the view's managed element using the jQuery API.
+Once a view class is defined, we'll next need to instance it:
 
-Also, Backbone views provide a convenient `view.$` method that we may use to query for elements within the managed view. Calling `view.$('…')` is equivelant to calling `view.$el.find('…')`. While this is a fairly minor workflow benefit, it encourages much more performant DOM access by localizing queries to within a view's element scope.
+	var MuppetsListView = Backbone.View.extend({
+		el: '#muppets-list'
+	});
+	
+	var muppetsList = new MuppetsListView();
+	
+	muppetsList.$el.append('<li>Hello World</li>');
+	
+When a view is instanced, Backbone will configure an `$el` property for us – this is a jQuery object wrapping the view's attached container element. This reference provides a convenient way to work with the container element using the jQuery API.
+
+Backbone also encourages efficient DOM practices using jQuery. Rather than performing large and expensive operations across the entire HTML document, Backbone Views provide a `$` method used for performing jQuery operations locally within the view's container element. For example:
+
+	muppetsList.$('li'); // << Finds all "li" tags within the view's container.
+
+Under the hood, using `view.$('…')` is synonymous to calling `view.$el.find('…')`. These localized queries greatly cut down the overhead of superflous DOM operations.
 
 ### Attaching a view's data source
 
