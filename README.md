@@ -332,9 +332,15 @@ Under the hood, using `view.$('…')` is synonymous with calling `view.$el.find(
 
 ### Attaching a view's data source
 
-Once a view class has defined its relationship with the DOM, we then construct instances of the view, and provide each instance with a data source. When constructing a view instance, we may provide it with a `model` or `collection` reference.
+A view is responsible for binding its document element to a model or a collection instance, provided to the view as a *constructor option*. For example:
+	
+	var myModel = new MyModel();
+	var myView = new MyView({model: myModel});
+	
+	// The provided model is attached directly onto the view:
+	console.log(myView.model === myModel); // << true
 
-Attaching a Model to a View (see final two lines):
+Attach a model to a view by providing a `{model: …}` constructor option:
 
 	var KermitModel = Backbone.Model.extend({
 		url: '/muppets/1'
@@ -354,7 +360,7 @@ Attaching a Model to a View (see final two lines):
 	var kermitModel = new KermitModel();
 	var kermitView = new MuppetsListItemView({model: kermitModel});
 
-Attaching a Collection to a View (see final two lines):
+Attach a collection to a view by providing a `{collection: …}` constructor option:
 
 	var MuppetsModel = Backbone.Model.extend({ . . . });
 	
@@ -375,9 +381,9 @@ Attaching a Collection to a View (see final two lines):
 	var muppetsList = new MuppetsCollection();
 	var muppetsView = new MuppetsListView({collection: muppetsList});
 
-In the above examples, a data source is provideded to each view as a *constructor option*. The provided data source is attached directly to its view instance, allowing the view to reference that source as `this.model` or `this.collection`. It will be the view's job to render this data source into its DOM element, and pass user input data from the DOM back into this data source.
+In the above examples, the provided data sources are attached directly to their view instances, thus allowing the views to reference those sources as `this.model` or `this.collection`. It will be the view's job to render its data source into its DOM element, and pass user input data from the DOM back into its data source.
 
-Also notice the `initialize` methods in the above examples. An `initialize` method is called on each new Backbone component at the time it's created, giving you an opportunity to configure the new object. All Backbone components provide `initialize` methods.
+Also note, the above examples leverage Backbone's `initialize` method. `initialize` is called once per object instance at the time the object is created, and is therefore useful for configuring new objects. Any Backbone component may define an `initialize` method.
 
 ### Rendering a View
 
