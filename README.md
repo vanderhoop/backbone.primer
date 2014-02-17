@@ -2,7 +2,7 @@
 
 The most common sentiment I hear from developers coming to Backbone is that they don't know where to start with it. Unlike full-featured frameworks with prescribed workflows (ie: Angular or Ember), Backbone is a lightweight library with few opinions. At its worst, some would say that Backbone has TOO few opinions. At its best thought, Backbone is a flexible component library designed to provide a baseline solution for common application design patterns.
 
-At its core, Backbone provides a comprehensive RESTful service package. This primer assumes that you have a basic understanding of REST services, and will focus on the interactions of Backbone components with RESTful data services.
+The core of Backbone provides a comprehensive RESTful service package. This primer assumes that you have a basic understanding of REST services, and will focus on the interactions of Backbone components with RESTful data services.
 
 
 ## What's In The Box?
@@ -387,16 +387,16 @@ Also note, the above examples leverage Backbone's `initialize` method. `initiali
 
 ### Rendering a View
 
-Among the primary responsibility of a view is to render data from its data source into its bound DOM element. Now, Backbone is notoriously unopinionated about this task (for better or worse), and provides no fixture for translating a data source into display-ready HTML. That's for us to define.
+Among the primary responsibility of a view is to render data from its data source into its bound DOM element. Backbone is notoriously unopinionated about this task (for better or worse), and provides no fixtures for translating a data source into display-ready HTML. That's for us to define.
 
-However, Backbone does dictate a general workflow for *where* and *when* rendering occurs:
+However, Backbone does prescribe a workflow for *where* and *when* rendering occurs:
 
 1. A views defines a `render` method. This method generates HTML from its data source, and installs that markup into the view's container element.
 2. A view binds event listeners to its model. Any changes to the model should trigger the view to re-render.
 
 A simple implementation:
 
-	<div id="#kermit-view"></div>
+	<div id="kermit-view"></div>
 	
 	<script>
 	var KermitModel = Backbone.Model.extend({
@@ -431,42 +431,91 @@ A simple implementation:
 In the above example, a simple render cycle is formed:
 
 1. The view's `render` method translates its bound model into display-ready HTML. The rendered HTML is inserted into the view's container element. A `render` method normally returns a reference to the view for method-chaining purposes.
-2. The view's `initialize` method binds event listeners to the model for `sync` and `change` events. Either of these model events will trigger the view to re-render. The view then fetches (loads) its model, and renders its initial appearance.
+2. The view's `initialize` method binds event listeners to the model for `sync` and `change` events. Either of those model events will trigger the view to re-render. The view then fetches (loads) its model, and renders its initial appearance.
 
-The core focus of this workflow is *event-driven behavior*. View rendering should NOT be a direct result of user interactions or application behaviors. Manually calling `render` is prone to errors and inconsistancies. Instead, rendering should be a simple union of data and display: when the data changes, the display updates.
+At the core of this workflow is *event-driven behavior*. View rendering should NOT be a direct result of user interactions or application behaviors. Manually timing `render` calls is prone to errors and inconsistancies. Instead, rendering should be a simple union of data and display: when the data changes, the display updates.
 
 ### Rendering with templates
 
-The most efficient way to render model data into the DOM is by creating a template that parses data attributes into a string of HTML markup.
+To simplify the process of rendering model data into display-ready markup, parsed HTML templates are commonly used. An HTML template looks generally like this:
 
-There are numerous JavaScript template libraries available… for some reason, [Handlebars]() is incredibly popular among Backbone developers. Personally, I find this odd considering that Underscore has a perfectly capable template renderer built in, and is already included in all Backbone apps. For this primer, we'll be focusing on the Underscore template renderer.
+	<p><a href="/muppets/<%= id %>"><%= name %></a></p>
+	<p>Job: <i><%= occupation %></i></p>
 
-First, we need to define raw-text HTML for a template's markup. There's a quick an easy trick for hiding raw text within HTML documents: include the raw text in a `<script>` tag with a bogus script type. For example:
+Look familiar? Template rendering on the front-end is very similar to server-side HTML rendering. We just need a JavaScript template utility to parse these template strings.
+
+There are numerous JavaScript template libraries available. For some reason, [Handlebars](https://github.com/wycats/handlebars.js/) is incredibly popular among Backbone developers… personally, I find this odd considering that Underscore has a [perfectly capable template renderer](http://underscorejs.org/#template) built in, and is thus omnipresent all Backbone apps. For this primer, we'll be using the Underscore template renderer.
+
+To implemented a front-end template, we first need to define the raw-text markup. Here's a quick and easy trick for hiding raw template text within HTML documents: include the raw text in a `<script>` tag with a bogus script type. For example:
 
 	<script type="text/template" id="muppet-item-tmpl">
-		<p><b><%= name %></b></p>
+		<p><a href="/muppets/<%= id %>"><%= name %></a></p>
 		<p>Job: <i><%= occupation %></i></p>
 	</script>
 
-The above script block uses a bogus script type, so will be ignored by HTML renderers. However, we can still find the ignored element within the DOM, extract its contents, and parse that into a template function. To create our template, we do this:
+The above `<script>` tag defines a bogus `type="text/template"` attribute. This isn't a valid script type, so the script tag's contents are ignored by HTML parsers. However––we can still access that ignored script tag within the DOM, extract its raw text content, and parse that text into a template. To create a JavaScript template, we do this:
 
 	var tmplText = $('#muppet-item-tmpl').html();
 	var muppetTmpl = _.template(tmplText);
 	
-The Underscore template method parses our raw text into a reusable *template function*. This template function may be called repeatedly with different data objects, and will generate a unique HTML string for each. For example, let's render Kermit's data using this template function:
+The Underscore `template` method parses our raw text into a reusable *template function*. This template function may be called repeatedly with different data sources, and will generate a parsed HTML string for each source. For example, let's quickly load and render Kermit:
 
-	var kermitHtml = muppetTmpl({
-		id: 1,
-		name: "Kermit",
-		occupation: "being green"
+	
+	var muppetTmpl = _.template( $('#muppet-item-tmpl').html() );
+	var kermit = new KermitModel();
+	
+	kermit.fetch().then(function() {
+		var html = muppetTmpl(kermit.toJSON());
 	});
 	
-	// Resulting HTML:
-	<p><b>Kermit</b></p>
+	// Resulting HTML string:
+	<p><a href="/muppets/1">Kermit</a></p>
 	<p>Job: <i>being green</i></p>
-	<button class="remove">x</button>
+
+In the above example, a `KermitModel` is created and fetched, and then rendered to HTML after its data is loaded. To generate HTML markup, we simply invoke the template function and pass in a data source. The process is pretty straight-forward until we get to that mysterious `toJSON` call. What's that?
+
+In order to render a Backbone Model using a generic template, we must first serialize the model into primitive data. Backbone provides a `toJSON` method on Models and Collections for precicely this reason; `toJSON` will serialize a *plain object* representation of these proprietary data structures.
+
+Let's revise the earlier rendering example to include a parsed template:
+
+	<div id="kermit-view"></div>
 	
-Be mindful that the most expensive operation involved with template rendering is parsing that initial template function. Therefor, it's best to retain a parsed template function for future use rather than reparse the template function every time you need to render a view.
+	<script type="text/template" id="muppet-tmpl">
+		<p><a href="/muppets/<%= id %>"><%= name %></a></p>
+		<p>Job: <i><%= occupation %></i></p>
+	</script>
+	
+	<script>
+	var KermitModel = Backbone.Model.extend({
+		url: '/muppets/1',
+		defaults: {
+			name: '',
+			occupation: ''
+		}
+	});
+	
+	ver KermitView = Backbone.View.extend({
+		el: '#kermit-view',
+		template: _.template($('#muppet-tmpl').html()),
+		
+		initialize: function() {
+			this.listenTo(this.model, 'sync change', this.render);
+			this.model.fetch();
+			this.render();
+		},
+		
+		render: function() {
+			var html = this.template(this.model.toJSON());
+			this.$el.html(html);
+			return this;
+		}
+	});	
+	
+	var kermit = new KermitModel();
+	var kermitView = new KermitView({model: kermit});
+	</script>
+
+Using a parsed template greatly simplifies the `render` method, especially as the size and complexity of the rendering increases. Also note that our template function is generated once and cached as a member of the view class. Generating template functions is slow, therefore it's best to retain a template function that will be used repeatedly.
 
 ### Binding DOM events
 
