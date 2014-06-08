@@ -447,9 +447,9 @@ At the core of this workflow is *event-driven behavior*. View rendering should N
 ### Rendering with templates
 
 To simplify the process of rendering model data into display-ready markup, parsed HTML templates are commonly used. An HTML template looks generally like this:
-```html
-  <p><a href="/muppets/<%= id %>"><%= name %></a></p>
-  <p>Job: <i><%= occupation %></i></p>
+```erb
+<p><a href="/muppets/<%= id %>"><%= name %></a></p>
+<p>Job: <i><%= occupation %></i></p>
 ```
 
 Look familiar? Template rendering on the front-end is very similar to server-side HTML rendering. We just need a JavaScript template utility to parse these template strings.
@@ -457,7 +457,7 @@ Look familiar? Template rendering on the front-end is very similar to server-sid
 There are numerous JavaScript template libraries available. For some reason, [Handlebars](https://github.com/wycats/handlebars.js/) is incredibly popular among Backbone developers… personally, I find this odd considering that Underscore has a [perfectly capable template renderer](http://underscorejs.org/#template) built in, and is thus omnipresent all Backbone apps. For this primer, we'll be using the Underscore template renderer.
 
 To implemented a front-end template, we first need to define the raw-text markup. Here's a quick and easy trick for hiding raw template text within HTML documents: include the raw text in a `<script>` tag with a bogus script type. For example:
-```html
+```erb
 <script type="text/template" id="muppet-item-tmpl">
   <p><a href="/muppets/<%= id %>"><%= name %></a></p>
   <p>Job: <i><%= occupation %></i></p>
@@ -482,8 +482,8 @@ kermit.fetch().then(function() {
 
 
 // Resulting HTML string:
-<p><a href="/muppets/1">Kermit</a></p>
-<p>Job: <i>being green</i></p>
+'<p><a href="/muppets/1">Kermit</a></p>
+<p>Job: <i>being green</i></p>'
 ```
 
 In the above example, a `KermitModel` is created and fetched, and then rendered to HTML after its data is loaded. To generate HTML markup, we simply invoke the template function and pass in a data source. The process is pretty straight-forward until we get to that mysterious `toJSON` call. What's that?
@@ -624,7 +624,7 @@ var MuppetCollection = Backbone.Collection.extend({
   model: MuppetModel,
   url: '/muppets'
 });
-	
+```
 #### 3. A List Item View
 
 The first View class that we'll want to define is for individual list items. This class will generate its own `<li>` container element, and will render itself with our list item template. That template function is being generated once, and then stored as a member of the class. All instances of this class will utilize that one parsed template function.
@@ -700,15 +700,15 @@ var MuppetsListView = Backbone.View.extend({
   	}
   }
 });
-	
+```
 #### 5. Instantiation
 
 Finally, we need to build instances of our components. We'll construct a collection instance to load data, and then construct a list view instance to display it. When our application components are all configured, all that's left to do is tell the collection to `fetch` for data!
 ```javascript
-  // Create a new list collection, a list view, and then fetch list data:
-  var muppetsList = new MuppetsCollection();
-  var muppetsView = new MuppetsListView({collection: muppetsList});
-  muppetsList.fetch();
+// Create a new list collection, a list view, and then fetch list data:
+var muppetsList = new MuppetsCollection();
+var muppetsView = new MuppetsListView({collection: muppetsList});
+muppetsList.fetch();
 ```
 ### Getting View Support
 
