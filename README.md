@@ -31,21 +31,21 @@ For this primer, let's assume the following RESTful Muppets data service exists:
 Gets a list of all Muppets within the application. Returns an array of all Muppet models (with some additional meta data):
 ```json
 {
-	"total": 2,
-	"page": 1,
-	"perPage": 10,
-	"muppets": [
-	  {
-		"id": 1,
-		"name": "Kermit",
-		"occupation": "being green"
-	  },
-	  {
-		"id": 2,
-		"name": "Gonzo",
-		"occupation": "plumber"
-	  }
-	]
+  "total": 2,
+  "page": 1,
+  "perPage": 10,
+  "muppets": [
+    {
+  	  "id": 1,
+  	  "name": "Kermit",
+  	  "occupation": "being green"
+    },
+    {
+  	  "id": 2,
+  	  "name": "Gonzo",
+  	  "occupation": "plumber"
+    }
+  ]
 }
 ```
 
@@ -140,21 +140,21 @@ muppets.fetch().then(function() {
 Easy, right? However, there's a problem here: our collection only created a single model. We were *supposed* to get back a list of two items. Let's review again what the `GET /muppets/` service returns…
 ```json
 {
-	"total": 2,
-	"page": 1,
-	"perPage": 10,
-	"muppets": [
-	  {
-		"id": 1,
-		"name": "Kermit",
-		"occupation": "being green"
-	  },
-	  {
-		"id": 2,
-		"name": "Gonzo",
-		"occupation": "plumber"
-	  }
-	]
+  "total": 2,
+  "page": 1,
+  "perPage": 10,
+  "muppets": [
+    {
+  	  "id": 1,
+  	  "name": "Kermit",
+  	  "occupation": "being green"
+    },
+    {
+  	  "id": 2,
+  	  "name": "Gonzo",
+  	  "occupation": "plumber"
+    }
+  ]
 }
 ```
 We can see that this list data does indeed contain two records, however our collection only created one model instance. Why? The reason is beacuse Collections are derived from Arrays, while Models are derived from Objects. In this case, our root data structure is an *Object* (not an Array), so our collection tried to parse the returned data directly into a model.
